@@ -20,7 +20,6 @@ namespace NTDOY_Microservice
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            DB_Connection.Connect();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

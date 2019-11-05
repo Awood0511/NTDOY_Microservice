@@ -45,6 +45,7 @@ namespace NTDOY_MicroService.Middleware
                 //create transaction_log object that holds full info about this transaction
                 TransactionLog log = new TransactionLog();
                 log.type = "Failed Stock Lookup";
+                log.account = null;
                 log.price = 0f;
                 log.quantity = 0;
                 log.username = ((User)context.Items["User"]).Username;

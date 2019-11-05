@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Builder;
 using NTDOY_Microservice;
 using NTDOY_Microservice.Models;
+using System.Data;
 
 namespace NTDOY_MicroService.Middleware
 {
@@ -21,6 +22,12 @@ namespace NTDOY_MicroService.Middleware
         //and the request has gone to an endpoint
         public async Task InvokeAsync(HttpContext context)
         {
+            //check if DB is connected and try to connect if it isnt
+            if (DB_Connection.conn == null || DB_Connection.conn.State != ConnectionState.Open)
+            {
+                DB_Connection.Connect();
+            }
+
             //check for db connection
             if(DB_Connection.conn == null)
             {

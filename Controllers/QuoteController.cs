@@ -25,16 +25,19 @@ namespace NTDOY_MicroService.Controllers
                 var memoryStream = new MemoryStream();
                 response.GetResponseStream().CopyTo(memoryStream);
                 Response.ContentType = "application/json";
-                await Response.Body.WriteAsync(memoryStream.ToArray());
+                byte[] r = memoryStream.ToArray();
+                await Response.Body.WriteAsync(r);
 
                 //create transaction_log object that holds full info about this transaction
                 TransactionLog log = new TransactionLog();
                 log.type = "Quote";
-                log.price = 0f;
+                log.account = null;
                 log.quantity = 0;
                 log.username = user.Username;
+                //get the price from the json response of stock data
+                string json = Encoding.ASCII.GetString(r);  //turn json into string to be readable
+                log.price = float.Parse(TransactionLog.GetPriceFromJson(json));     //parse the price into a double to be saved
                 HttpContext.Items["Log"] = log; //save log to be logged in middleware
-
             }
             catch (Exception e)
             {
@@ -43,6 +46,7 @@ namespace NTDOY_MicroService.Controllers
                 //create transaction_log object that holds full info about this transaction
                 TransactionLog log = new TransactionLog();
                 log.type = "Failed Stock Lookup";
+                log.account = null;
                 log.price = 0f;
                 log.quantity = 0;
                 log.username = ((User)HttpContext.Items["User"]).Username;

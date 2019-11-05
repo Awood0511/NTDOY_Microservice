@@ -38,9 +38,10 @@ namespace NTDOY_MicroService.Middleware
                 //create transaction_log object that holds full info about this transaction
                 TransactionLog log = new TransactionLog();
                 log.type = "Failed Authorization";
+                log.account = null;
                 log.price = 0f;
                 log.quantity = 0;
-                log.username = "Unknown";
+                log.username = null;
                 context.Items["Log"] = log; //save log to be logged in middleware
                 return;
             }
@@ -56,9 +57,10 @@ namespace NTDOY_MicroService.Middleware
                     //create transaction_log object that holds full info about this transaction
                     TransactionLog log = new TransactionLog();
                     log.type = "Failed Authorization";
+                    log.account = null;
                     log.price = 0f;
                     log.quantity = 0;
-                    log.username = "Unknown";
+                    log.username = null;
                     context.Items["Log"] = log; //save log to be logged in middleware
                 }
                 else
@@ -79,9 +81,10 @@ namespace NTDOY_MicroService.Middleware
                 //create transaction_log object that holds full info about this transaction
                 TransactionLog log = new TransactionLog();
                 log.type = "Failed Authorization";
+                log.account = null;
                 log.price = 0f;
                 log.quantity = 0;
-                log.username = "Unknown";
+                log.username = null;
                 context.Items["Log"] = log; //save log to be logged in middleware
             }
         }

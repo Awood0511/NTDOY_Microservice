@@ -7,7 +7,7 @@ namespace NTDOY_Microservice
     {
         public static MySqlConnection conn = null; //connection to db
 
-        private static string connection_string = "server=35.224.129.168;uid=root;pwd=ntdoypassword;database=NTDOY_Logs";
+        private static string connection_string = Environment.GetEnvironmentVariable("dbconnection");
         //attempt to connect to the database
         public static void Connect() {
             try

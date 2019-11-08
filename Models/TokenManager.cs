@@ -9,7 +9,7 @@ namespace NTDOY_MicroService.Models
 
     public class TokenManager
     {
-        private static string Secret = "XCAP05H6LoKvbRRa/QkqLNMI7cOHguaRyHzyg7n5qEkGjQmtBhz4SzYh4Fqwjyi3KJHlSXKPwVu2+bXr6CtpgQ==";
+        private static string Secret = Environment.GetEnvironmentVariable("secret");
 
         //return the user that made the request or null if not validated
         public static User ValidateToken(string token)

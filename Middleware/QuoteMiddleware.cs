@@ -23,7 +23,7 @@ namespace NTDOY_MicroService.Middleware
         public async Task InvokeAsync(HttpContext context)
         {
             const string url = "https://sandbox.tradier.com/v1/markets/quotes?symbols=NTDOY";
-            const string token = "IymVCsUIpSobaA3RGFqGtWGWzMUQ";
+            string token = Environment.GetEnvironmentVariable("tradier");
 
             try
             {

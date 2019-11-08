@@ -1,5 +1,6 @@
-﻿using MySql.Data.MySqlClient;
-using System;
+﻿using System;
+using MySql.Data.MySqlClient;
+using System.Collections;
 
 namespace NTDOY_Microservice.Models
 {
@@ -30,6 +31,35 @@ namespace NTDOY_Microservice.Models
             {
                 Console.WriteLine(ex.ToString());
             }
+        }
+
+        //select all transaction logs from the database
+        public static ArrayList GetAllTransactions()
+        {
+            ArrayList cols = new ArrayList();   //array list to store all columns
+
+            string sql = "SELECT * FROM transaction_logs";
+            MySqlCommand cmd = DB_Connection.conn.CreateCommand();
+            cmd.CommandText = sql;
+            MySqlDataReader rdr = cmd.ExecuteReader();
+
+            while (rdr.Read())
+            {
+                cols.Add(new
+                {
+                    t_id = rdr["t_id"],
+                    t_time = rdr["t_time"],
+                    t_type = rdr["t_type"],
+                    t_account = rdr["t_account"],
+                    t_price = rdr["t_price"],
+                    t_quantity = rdr["t_quantity"],
+                    username = rdr["username"]
+                });
+            }
+
+            rdr.Close();
+            return cols;
+
         }
 
         //gets a stock quoute json response string and gets the last price value from it

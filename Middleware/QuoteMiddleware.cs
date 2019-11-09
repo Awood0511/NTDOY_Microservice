@@ -19,7 +19,7 @@ namespace NTDOY_MicroService.Middleware
 
         //attempts to get stock information about NTDOY
         //short circuits the pipeline if this fails since
-        //all endpoints rely on this information
+        //almost all endpoints rely on this information
         public async Task InvokeAsync(HttpContext context)
         {
             const string url = "https://sandbox.tradier.com/v1/markets/quotes?symbols=NTDOY";
@@ -41,14 +41,14 @@ namespace NTDOY_MicroService.Middleware
             catch (Exception e)
             {
                 Console.WriteLine(e.StackTrace);
+                context.Response.StatusCode = 400;
                 await context.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not get stock information from Tradier."));
                 //create transaction_log object that holds full info about this transaction
-                TransactionLog log = new TransactionLog();
-                log.type = "Failed Stock Lookup";
-                log.account = null;
-                log.price = 0f;
-                log.quantity = 0;
-                log.username = ((User)context.Items["User"]).Username;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Failed Stock Lookup",
+                    Username = ((User)context.Items["User"]).Username
+                };
                 context.Items["Log"] = log; //save log to be logged in middleware
             }
 

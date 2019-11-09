@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
 using NTDOY_Microservice.Models;
 using NTDOY_MicroService;
 
@@ -19,12 +21,11 @@ namespace NTDOY_Microservice.Controllers
         {
             try
             {
-                //get the headers
-                StringValues quan, acc; //headers for qunatity and account name
-                string account;
+                //get the query params
+                string accnt;
                 int quantity;
-                Request.Headers.TryGetValue("quantity", out quan);
-                Request.Headers.TryGetValue("account", out acc);
+                Request.Query.TryGetValue("quantity", out StringValues quan);
+                Request.Query.TryGetValue("account", out StringValues acc);
 
                 //parse out the price
                 var response = (HttpWebResponse)HttpContext.Items["WebResponse"];
@@ -32,63 +33,100 @@ namespace NTDOY_Microservice.Controllers
                 var memoryStream = new MemoryStream();
                 response.GetResponseStream().CopyTo(memoryStream);
                 string json = Encoding.ASCII.GetString(memoryStream.ToArray());  //turn json into string to be readable
-                float price = float.Parse(TransactionLog.GetPriceFromJson(json));
+                float price = TransactionLog.GetPriceFromJson(json);
 
                 if (quan.Count == 1 && acc.Count == 1)
                 {
                     quantity = Int32.Parse(quan[0]);
-                    account = acc[0];
+                    accnt = acc[0];
                 }
                 else
                 {
                     //headers not assigned properly so fail the buy operation
+                    Response.StatusCode = 400;
                     await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not complete buy operation."));
-                    TransactionLog l = new TransactionLog();
-                    l.type = "Failed Buy";
-                    l.account = null;
-                    l.price = 0f;
-                    l.quantity = 0;
-                    l.username = user.Username;
+                    TransactionLog l = new TransactionLog
+                    {
+                        Type = "Failed Buy",
+                        Username = user.Username
+                    };
                     HttpContext.Items["Log"] = l;
                     return;
                 }
 
+
+                //(Part 2)
                 //TODO check if user has enough money for price * quantity in the listed account
                 //find account current money and see if its less than cost of this buy
                 //if it costs more than they have fail the buy else continue
 
+                //TODO check if bank has enough stocks to cover this, if they dont purchase difference plus 5000
+
                 //log the purchase in the buy table
-                BuySell buy = new BuySell();
-                buy.username = user.Username;
-                buy.account = account;
-                buy.price = price;
-                buy.quantity = quantity;
+                BuySell buy = new BuySell
+                {
+                    Username = user.Username,
+                    Account = accnt,
+                    Price = price,
+                    Quantity = quantity
+                };
                 int id = buy.LogBuy();
 
-                //TODO subtract the purchase cost from their money and wait to see if successful
-                //if it fails undo the buy at id and also fail the buy else continue to log
+                if(id == -1) {
+                    Response.StatusCode = 400;
+                    await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not complete buy operation."));
+                    TransactionLog l = new TransactionLog
+                    {
+                        Type = "Failed Buy",
+                        Account = accnt,
+                        Quantity = quantity,
+                        Username = user.Username,
+                        Price = price
+                    };
+                    HttpContext.Items["Log"] = l; //save log to be logged in middleware
+                    return;
+                }
+                else
+                {
+                    //respond with a json of the buy info
+                    var cols = new
+                    {
+                        TransactionType = "BUY",
+                        User = user.Username,
+                        Account = accnt,
+                        Price = price,
+                        Quantity = quantity,
+                        CostToUser = price * quantity
+                    };
+                    HttpContext.Response.ContentType = "application/json";
+                    await HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(cols)));
+                }
+
+                //(Part 2)
+                //TODO subtract the price from money in users account
 
                 //create transaction_log object that holds full info about this transaction
-                await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Buy Successful"));
-                TransactionLog log = new TransactionLog();
-                log.type = "Buy";
-                log.account = account;
-                log.quantity = quantity;
-                log.username = user.Username;
-                log.price = price;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Buy",
+                    Account = accnt,
+                    Quantity = quantity,
+                    Username = user.Username,
+                    Price = price
+                };
                 HttpContext.Items["Log"] = log; //save log to be logged in middleware
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.StackTrace);
+                Response.StatusCode = 400;
                 await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not complete buy operation."));
                 //create transaction_log object that holds full info about this transaction
-                TransactionLog log = new TransactionLog();
-                log.type = "Failed Buy";
-                log.account = null;
-                log.price = 0f;
-                log.quantity = 0;
-                log.username = ((User)HttpContext.Items["User"]).Username;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Failed Buy",
+                    Username = ((User)HttpContext.Items["User"]).Username
+                };
                 HttpContext.Items["Log"] = log; //save log to be logged in middleware
             }
         }

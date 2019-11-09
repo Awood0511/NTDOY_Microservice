@@ -29,7 +29,7 @@ namespace NTDOY_MicroService.Models
 
             try
             {
-                //validate the calime and loop
+                //validate the claims and loop
                 var claims = handler.ValidateToken(token, validations, out var tokenSecure);
                 if (claims != null)
                 {

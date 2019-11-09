@@ -15,7 +15,6 @@ namespace NTDOY_MicroService.Controllers
         [HttpGet]
         public async void GetStockQuote()
         {
-            //make request to tradier
             try
             {
                 //send tradier response to user
@@ -26,30 +25,31 @@ namespace NTDOY_MicroService.Controllers
                 response.GetResponseStream().CopyTo(memoryStream);
                 Response.ContentType = "application/json";
                 byte[] r = memoryStream.ToArray();
+                Response.StatusCode = 200;
                 await Response.Body.WriteAsync(r);
 
                 //create transaction_log object that holds full info about this transaction
-                TransactionLog log = new TransactionLog();
-                log.type = "Quote";
-                log.account = null;
-                log.quantity = 0;
-                log.username = user.Username;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Quote",
+                    Username = user.Username
+                };
                 //get the price from the json response of stock data
                 string json = Encoding.ASCII.GetString(r);  //turn json into string to be readable
-                log.price = float.Parse(TransactionLog.GetPriceFromJson(json));     //parse the price into a double to be saved
+                log.Price = TransactionLog.GetPriceFromJson(json);     //parse the price into a double to be saved
                 HttpContext.Items["Log"] = log; //save log to be logged in middleware
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.StackTrace);
+                Response.StatusCode = 400;
                 await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not get stock information from Tradier."));
                 //create transaction_log object that holds full info about this transaction
-                TransactionLog log = new TransactionLog();
-                log.type = "Failed Stock Lookup";
-                log.account = null;
-                log.price = 0f;
-                log.quantity = 0;
-                log.username = ((User)HttpContext.Items["User"]).Username;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Failed Stock Lookup",
+                    Username = ((User)HttpContext.Items["User"]).Username
+                };
                 HttpContext.Items["Log"] = log; //save log to be logged in middleware
             }
         }

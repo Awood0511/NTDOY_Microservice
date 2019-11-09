@@ -24,7 +24,7 @@ namespace NTDOY_MicroService.Middleware
         public async Task InvokeAsync(HttpContext context)
         {
             context.Request.Headers.TryGetValue("Authorization", out StringValues values);
-            String token = "";
+            String token;
 
             if (values.Count == 1)
             {
@@ -36,12 +36,10 @@ namespace NTDOY_MicroService.Middleware
                 await context.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("No Access Token Provided"));
 
                 //create transaction_log object that holds full info about this transaction
-                TransactionLog log = new TransactionLog();
-                log.type = "Failed Authorization";
-                log.account = null;
-                log.price = 0f;
-                log.quantity = 0;
-                log.username = null;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Failed Authorization"
+                };
                 context.Items["Log"] = log; //save log to be logged in middleware
                 return;
             }
@@ -50,24 +48,19 @@ namespace NTDOY_MicroService.Middleware
             try
             {
                 User user = TokenManager.ValidateToken(token);
-                if (TokenManager.ValidateToken(token) == null)
+                if (user == null)
                 {
                     context.Response.StatusCode = 403;
                     await context.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Invalid Token"));
                     //create transaction_log object that holds full info about this transaction
-                    TransactionLog log = new TransactionLog();
-                    log.type = "Failed Authorization";
-                    log.account = null;
-                    log.price = 0f;
-                    log.quantity = 0;
-                    log.username = null;
+                    TransactionLog log = new TransactionLog
+                    {
+                        Type = "Failed Authorization"
+                    };
                     context.Items["Log"] = log; //save log to be logged in middleware
                 }
                 else
                 {
-                    //context.Request.Headers.Add("User", user.Username);
-                    //context.Request.Headers.Add("Id", user.Id.ToString());
-                    //context.Request.Headers.Add("Email", user.Email);
                     context.Items["User"] = user;   //attach user object to Items
 
                     await _next(context);
@@ -79,12 +72,10 @@ namespace NTDOY_MicroService.Middleware
                 context.Response.StatusCode = 403;
                 await context.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Invalid Token"));
                 //create transaction_log object that holds full info about this transaction
-                TransactionLog log = new TransactionLog();
-                log.type = "Failed Authorization";
-                log.account = null;
-                log.price = 0f;
-                log.quantity = 0;
-                log.username = null;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Failed Authorization"
+                };
                 context.Items["Log"] = log; //save log to be logged in middleware
             }
         }

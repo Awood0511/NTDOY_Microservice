@@ -40,6 +40,8 @@ namespace NTDOY_MicroService.Middleware
 
             //log the results of this request
             var log = (TransactionLog)context.Items["Log"];
+            log.RequestType = context.Request.Method;
+            log.Origin = context.Request.Host.Value;
             log.LogToDatabase();
         }
     }

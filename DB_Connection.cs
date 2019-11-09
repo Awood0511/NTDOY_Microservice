@@ -6,8 +6,8 @@ namespace NTDOY_Microservice
     public class DB_Connection
     {
         public static MySqlConnection conn = null; //connection to db
-
         private static string connection_string = Environment.GetEnvironmentVariable("dbconnection");
+
         //attempt to connect to the database
         public static void Connect() {
             try
@@ -22,6 +22,13 @@ namespace NTDOY_Microservice
                 Console.WriteLine(ex.StackTrace);
                 conn = null;
             }
+        }
+
+        //used for testing, set the connection to something else
+        //possibly a mock or test database
+        public void SetConnection(MySqlConnection newConn)
+        {
+            conn = newConn;
         }
     }
 }

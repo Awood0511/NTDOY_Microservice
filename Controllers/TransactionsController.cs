@@ -31,19 +31,16 @@ namespace NTDOY_Microservice.Controllers
                     ArrayList trans = TransactionLog.GetAllTransactions();
                     HttpContext.Response.ContentType = "application/json";
                     await HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(trans)));
-                    log.type = "Admin Viewed Logs";
+                    log.Type = "Admin Viewed Logs";
                 }
                 else
                 {
                     HttpContext.Response.StatusCode = 400;
                     await HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("You do not have permission."));
-                    log.type = "Non Admin Blocked from Logs";
+                    log.Type = "Non Admin Blocked from Logs";
                 }
 
-                log.username = user.Username;
-                log.account = "";
-                log.price = 0f;
-                log.quantity = 0;
+                log.Username = user.Username;
                 HttpContext.Items["Log"] = log;
 
             }
@@ -51,15 +48,14 @@ namespace NTDOY_Microservice.Controllers
             {
                 Console.WriteLine(e.StackTrace);
                 User u = (User)HttpContext.Items["User"];
-                TransactionLog log = new TransactionLog();
-                log.type = "Error During Log View";
-                log.username = user.Username;
-                log.account = "";
-                log.price = 0f;
-                log.quantity = 0;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Non Admin Blocked from Logs",
+                    Username = u.Username
+                };
                 HttpContext.Items["Log"] = log;
-                HttpContext.Response.StatusCode = 404;
-                await HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Something went wrong."));
+                HttpContext.Response.StatusCode = 400;
+                await HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("You do not have permission."));
             }
         }
     }

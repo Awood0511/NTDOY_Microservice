@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
 using NTDOY_Microservice.Models;
 using NTDOY_MicroService;
 
@@ -19,12 +21,11 @@ namespace NTDOY_Microservice.Controllers
         {
             try
             {
-                //get the headers
-                StringValues quan, acc; //headers for qunatity and account name
+                //get the query params
                 string account;
                 int quantity;
-                Request.Headers.TryGetValue("quantity", out quan);
-                Request.Headers.TryGetValue("account", out acc);
+                Request.Query.TryGetValue("quantity", out StringValues quan);
+                Request.Query.TryGetValue("account", out StringValues acc);
 
                 //parse out the price
                 var response = (HttpWebResponse)HttpContext.Items["WebResponse"];
@@ -32,7 +33,7 @@ namespace NTDOY_Microservice.Controllers
                 var memoryStream = new MemoryStream();
                 response.GetResponseStream().CopyTo(memoryStream);
                 string json = Encoding.ASCII.GetString(memoryStream.ToArray());  //turn json into string to be readable
-                float price = float.Parse(TransactionLog.GetPriceFromJson(json));
+                float price = TransactionLog.GetPriceFromJson(json);
 
                 if (quan.Count == 1 && acc.Count == 1)
                 {
@@ -42,13 +43,13 @@ namespace NTDOY_Microservice.Controllers
                 else
                 {
                     //headers not assigned properly so fail the sell operation
+                    Response.StatusCode = 400;
                     await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not complete sell operation."));
-                    TransactionLog l = new TransactionLog();
-                    l.type = "Failed Sell";
-                    l.account = null;
-                    l.price = 0f;
-                    l.quantity = 0;
-                    l.username = user.Username;
+                    TransactionLog l = new TransactionLog
+                    {
+                        Type = "Failed Sell",
+                        Username = user.Username
+                    };
                     HttpContext.Items["Log"] = l;
                     return;
                 }
@@ -58,37 +59,72 @@ namespace NTDOY_Microservice.Controllers
                 //fail if it is less than
 
                 //log the sale in the sell table
-                BuySell sell = new BuySell();
-                sell.username = user.Username;
-                sell.account = account;
-                sell.price = price;
-                sell.quantity = quantity;
+                BuySell sell = new BuySell
+                {
+                    Username = user.Username,
+                    Account = account,
+                    Price = price,
+                    Quantity = quantity
+                };
                 int id = sell.LogSell();
 
+                if (id == -1)
+                {
+                    Response.StatusCode = 400;
+                    await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not complete sell operation."));
+                    TransactionLog l = new TransactionLog
+                    {
+                        Type = "Failed Sell",
+                        Account = account,
+                        Quantity = quantity,
+                        Username = user.Username,
+                        Price = price
+                    };
+                    HttpContext.Items["Log"] = l; //save log to be logged in middleware
+                    return;
+                }
+                else
+                {
+                    //respond with a json of the sell info
+                    var cols = new
+                    {
+                        TransactionType = "SELL",
+                        User = user.Username,
+                        Account = account,
+                        Price = price,
+                        Quantity = quantity,
+                        EarningsForUser = price * quantity
+                    };
+                    HttpContext.Response.ContentType = "application/json";
+                    await HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(cols)));
+                }
+
+                //(Part2)
                 //TODO add the sell cost to the users account
                 //if it fails undo the sell at id and also fail the sell else continue to log
 
                 //create transaction_log object that holds full info about this transaction
-                await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Sell Successful"));
-                TransactionLog log = new TransactionLog();
-                log.type = "Sell";
-                log.account = account;
-                log.quantity = quantity;
-                log.username = user.Username;
-                log.price = price;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Sell",
+                    Account = account,
+                    Quantity = quantity,
+                    Username = user.Username,
+                    Price = price
+                };
                 HttpContext.Items["Log"] = log; //save log to be logged in middleware
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.StackTrace);
+                Response.StatusCode = 400;
                 await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not complete Sell operation."));
                 //create transaction_log object that holds full info about this transaction
-                TransactionLog log = new TransactionLog();
-                log.type = "Failed Sell";
-                log.account = null;
-                log.price = 0f;
-                log.quantity = 0;
-                log.username = ((User)HttpContext.Items["User"]).Username;
+                TransactionLog log = new TransactionLog
+                {
+                    Type = "Failed Sell",
+                    Username = ((User)HttpContext.Items["User"]).Username
+                };
                 HttpContext.Items["Log"] = log; //save log to be logged in middleware
             }
         }

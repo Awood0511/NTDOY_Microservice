@@ -25,12 +25,14 @@ Inputs: Token in Auth Header
 Outputs: json of all transactions from database table that stores logs
 
 /api/sell : user sells a certain amount of stock in a specific account (must check if they have enough stocks to sell and give them the money)
-Inputs: Token in Auth Header, account_name, buy_amount
+Inputs: Token in Auth Header, account_name, buy_amount as query params
+Outputs: username, account, price, quantity as json
 TODO make sure user has enough stocks to sell in that specific account
 TODO add the money to the users account after the transaction is complete (Milestone 2)
 
 /api/buy : user buys a certain amount of stock in a specific account (must check if they have the money and that OBS has enough stocks to sell)
-Inputs: Token in Auth Header, account_name, sell_amount
+Inputs: Token in Auth Header, account_name, sell_amount as query params
+Outputs: username, account, price, quantity as json
 TODO make sure the user has enough money to make this purchase then subtract after transaction is complete (Milestone 2)
 
 TODO Test (lul)
@@ -41,4 +43,3 @@ env variables:
 dbconnection: "server=35.224.129.168;uid=root;pwd=ntdoypassword;database=NTDOY_Logs"
 secret: "XCAP05H6LoKvbRRa/QkqLNMI7cOHguaRyHzyg7n5qEkGjQmtBhz4SzYh4Fqwjyi3KJHlSXKPwVu2+bXr6CtpgQ=="
 tradier: "IymVCsUIpSobaA3RGFqGtWGWzMUQ"
-

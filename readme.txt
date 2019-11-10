@@ -9,9 +9,9 @@ TODO add Bearer to Authorization header and add Cookie compatability
 
 - Logs all transactions in database (Logging middleware)
 
-- start by buying 5k stocks to the main bank (admin user acount represents the bank) TODO
+- start by buying 5k stocks to the main bank (admin user acount represents the bank)
 
-- if a buy would put stock below a certain amount, buy enough to cover that sale plus a certain amount to cover future sales TODO
+- if a buy would put stock below a certain amount, buy enough to cover that sale plus a certain amount to cover future sales
 
 
 
@@ -27,7 +27,6 @@ Outputs: json of all transactions from database table that stores logs
 /api/sell : user sells a certain amount of stock in a specific account (must check if they have enough stocks to sell and give them the money)
 Inputs: Token in Auth Header, account_name, buy_amount as query params
 Outputs: username, account, price, quantity as json
-TODO make sure user has enough stocks to sell in that specific account
 TODO add the money to the users account after the transaction is complete (Milestone 2)
 
 /api/buy : user buys a certain amount of stock in a specific account (must check if they have the money and that OBS has enough stocks to sell)
@@ -37,8 +36,7 @@ TODO make sure the user has enough money to make this purchase then subtract aft
 
 TODO Test (lul)
 
-REMOVE LATER
-
+REMOVE LATER:
 env variables:
 dbconnection: "server=35.224.129.168;uid=root;pwd=ntdoypassword;database=NTDOY_Logs"
 secret: "XCAP05H6LoKvbRRa/QkqLNMI7cOHguaRyHzyg7n5qEkGjQmtBhz4SzYh4Fqwjyi3KJHlSXKPwVu2+bXr6CtpgQ=="

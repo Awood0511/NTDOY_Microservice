@@ -12,6 +12,7 @@ namespace NTDOY_Microservice
         public static void Connect() {
             try
             {
+                Console.WriteLine("TEST: " + connection_string);
                 DB_Connection connection = new DB_Connection();
                 conn = new MySqlConnection();
                 conn.ConnectionString = connection_string;

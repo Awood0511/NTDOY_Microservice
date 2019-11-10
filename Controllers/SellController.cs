@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+//using System.Collections;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -54,11 +54,7 @@ namespace NTDOY_Microservice.Controllers
                     return;
                 }
 
-                //TODO check if user has enough stock in this account to sell the listed quantity
-                //find account current stock in this account and see if its greater or equal to quantity
-                //fail if it is less than
-
-                //log the sale in the sell table
+                //create the sale object
                 BuySell sell = new BuySell
                 {
                     Username = user.Username,
@@ -66,6 +62,28 @@ namespace NTDOY_Microservice.Controllers
                     Price = price,
                     Quantity = quantity
                 };
+
+                //check if user has enough stock in this account to sell the listed quantity
+                //also checks if the quantity they want to sell is greater than 0
+                int userStock = sell.UserAccountStock();
+                if(userStock - sell.Quantity < 0 || sell.Quantity <= 0)
+                {
+                    //fail the sell
+                    Response.StatusCode = 400;
+                    await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not complete sell operation."));
+                    TransactionLog l = new TransactionLog
+                    {
+                        Type = "Failed Sell",
+                        Account = account,
+                        Price = price,
+                        Quantity = quantity,
+                        Username = user.Username
+                    };
+                    HttpContext.Items["Log"] = l;
+                    return;
+                }
+
+                //log the sale since they have enough to stocks to sell to the bank
                 int id = sell.LogSell();
 
                 if (id == -1)

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+//using System.Collections;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -60,7 +60,50 @@ namespace NTDOY_Microservice.Controllers
                 //find account current money and see if its less than cost of this buy
                 //if it costs more than they have fail the buy else continue
 
-                //TODO check if bank has enough stocks to cover this, if they dont purchase difference plus 5000
+                //make sure quantity is positive
+                if(quantity <= 0)
+                {
+                    //fail the buy
+                    Response.StatusCode = 400;
+                    await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not complete buy operation."));
+                    TransactionLog l = new TransactionLog
+                    {
+                        Type = "Failed Buy",
+                        Account = accnt,
+                        Quantity = quantity,
+                        Username = user.Username,
+                        Price = price
+                    };
+                    HttpContext.Items["Log"] = l; //save log to be logged in middleware
+                    return;
+                }
+
+                //check if bank has enough stocks to cover this, if they dont purchase difference plus 5000
+                int bankStocks = BuySell.BankStock();
+                int stocksLeft = bankStocks - quantity;
+                if(stocksLeft <= 0)
+                {
+                    //bank needs to purchase enough to cover purchase plus 5K
+                    int purchase = stocksLeft * -1 + 5000;
+                    bool success = BuySell.BankPurchase(purchase, price);
+                    //fail the buy if the bank couldnt purchase stock
+                    if (!success)
+                    {
+                        //fail the buy
+                        Response.StatusCode = 400;
+                        await Response.Body.WriteAsync(Encoding.ASCII.GetBytes("Could not complete buy operation."));
+                        TransactionLog l = new TransactionLog
+                        {
+                            Type = "Failed Buy",
+                            Account = accnt,
+                            Quantity = quantity,
+                            Username = user.Username,
+                            Price = price
+                        };
+                        HttpContext.Items["Log"] = l; //save log to be logged in middleware
+                        return;
+                    }
+                }
 
                 //log the purchase in the buy table
                 BuySell buy = new BuySell

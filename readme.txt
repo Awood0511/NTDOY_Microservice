@@ -1,7 +1,7 @@
 -----------API non-endpoint Requirements (possibly implemented with middleware)----------------
 
 - Only accepts requests with valid Token (JWT Header = Authorization: Bearer [Token Here]) use middleware to auth and parse out user info into request headers
-TODO add Bearer to Authorization header and add Cookie compatability
+TODO add Cookie auth option
 
 - One user may have multiple accounts (same token, different account passed into buy/sell transactions) specify account being used for buy and sell transactions
 

@@ -23,13 +23,17 @@ namespace NTDOY_MicroService.Middleware
         //returns access denied if no token or token fails
         public async Task InvokeAsync(HttpContext context)
         {
+            //TODO first check if token is present in a cookie, then default to checking header which is the code below
+
+            //didnt find cookie so check request header: Authorization: Bearer {token}
             context.Request.Headers.TryGetValue("Authorization", out StringValues values);
             String token;
 
-            if (values.Count == 1)
+            if (values.Count == 1 && values[0].Contains("Bearer "))
             {
                 token = values[0];
             }
+            //token not sent properly so fail auth
             else
             {
                 context.Response.StatusCode = 403;
@@ -47,6 +51,7 @@ namespace NTDOY_MicroService.Middleware
 
             try
             {
+                token = token.Replace("Bearer ", ""); //remove "Bearer " part of the string
                 User user = TokenManager.ValidateToken(token);
                 if (user == null)
                 {
